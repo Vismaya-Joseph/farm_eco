@@ -12,28 +12,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CSS STYLING ENGINE (Clean White & Green SaaS Theme) ---
+# --- 2. CSS STYLING ENGINE ---
 def local_css():
     st.markdown(
         """
         <style>
-        /* 1. Main Background: Very Light Grey */
-        .stApp {
-            background-color: #f8f9fa;
-            color: #333333;
-        }
-        
-        /* 2. Sidebar: Deep Emerald Green */
-        section[data-testid="stSidebar"] {
-            background-color: #0e3b28;
-        }
-        
-        /* Force White Text in Sidebar */
-        section[data-testid="stSidebar"] * {
-            color: white !important;
-        }
-        
-        /* 3. GLOBAL BUTTON STYLING (Green with White Text) */
+        .stApp { background-color: #f8f9fa; color: #333333; }
+        section[data-testid="stSidebar"] { background-color: #0e3b28; }
+        section[data-testid="stSidebar"] * { color: white !important; }
         .stButton > button {
             background-color: #0e3b28 !important; 
             color: white !important;
@@ -41,17 +27,11 @@ def local_css():
             border: none;
             padding: 10px 24px;
             font-weight: bold;
-            transition: all 0.3s ease;
         }
-        
-        /* Button Hover Effect */
         .stButton > button:hover {
             background-color: #1b5e20 !important; 
             transform: scale(1.05);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        
-        /* 4. Dashboard Cards */
         .dashboard-card {
             background-color: white;
             padding: 25px;
@@ -60,8 +40,6 @@ def local_css():
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             height: 100%;
         }
-        
-        /* 5. Seasonal Advice Banner */
         .seasonal-banner {
             background: linear-gradient(135deg, #0e3b28 0%, #1b5e20 100%);
             color: white;
@@ -70,8 +48,6 @@ def local_css():
             margin-top: 30px;
             box-shadow: 0 4px 15px rgba(14, 59, 40, 0.3);
         }
-        
-        /* Hide default Streamlit elements */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         .block-container {padding-top: 2rem;}
@@ -80,11 +56,12 @@ def local_css():
         unsafe_allow_html=True
     )
 
-# --- 3. DATA LOADER ---
+# --- 3. DATA LOADER (FIXED PATH) ---
 @st.cache_data
 def load_data():
     try:
-        df = pd.read_csv("data/large_agri_dataset.csv")
+        # This points to the 'data' folder seen in your screenshot
+        df = pd.read_csv("large_agri_dataset.csv")
         df['Date'] = pd.to_datetime(df['Date'])
         return df
     except FileNotFoundError:
@@ -96,11 +73,9 @@ df = load_data()
 st.sidebar.title("FarmEco Pro 🚀")
 st.sidebar.markdown("---")
 
-# Initialize page state for navigation
 if "page" not in st.session_state:
     st.session_state.page = "Home"
 
-# The Navigation Menu (Using the names you requested)
 menu = st.sidebar.radio(
     "Select Module:", 
     ["Home", "Market Analytics (Real AI)", "AgroWaste (Smart Reuse)", "CarbonCredit (Income Calc)"],
@@ -113,15 +88,12 @@ menu = st.sidebar.radio(
 if menu == "Home":
     local_css()
     
-    # Helper function to switch pages via buttons
     def switch_page(page_name):
         st.session_state.page = page_name
 
-    # Header
     st.markdown("<h2 style='color: #0e3b28;'>Dashboard Overview</h2>", unsafe_allow_html=True)
     st.markdown("<p style='color: #666; margin-bottom: 30px;'>Welcome back, Farmer. Here is your daily farming summary.</p>", unsafe_allow_html=True)
 
-    # 3 Feature Cards
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -134,7 +106,6 @@ if menu == "Home":
             </p>
         </div>
         """, unsafe_allow_html=True)
-        # Button to Market Analytics
         st.button("Check Forecast ➡️", key="btn_market", on_click=switch_page, args=("Market Analytics (Real AI)",))
 
     with col2:
@@ -147,7 +118,6 @@ if menu == "Home":
             </p>
         </div>
         """, unsafe_allow_html=True)
-        # Button to Carbon Credit
         st.button("Calculate Earnings ➡️", key="btn_carbon", on_click=switch_page, args=("CarbonCredit (Income Calc)",))
 
     with col3:
@@ -160,10 +130,8 @@ if menu == "Home":
             </p>
         </div>
         """, unsafe_allow_html=True)
-        # Button to AgroWaste
         st.button("Get Ideas ➡️", key="btn_waste", on_click=switch_page, args=("AgroWaste (Smart Reuse)",))
 
-    # Seasonal Advice Banner
     st.markdown("""
     <div class="seasonal-banner">
         <h2 style="color: white; margin-top: 0;">Seasonal Advice 🌦️</h2>
@@ -174,8 +142,7 @@ if menu == "Home":
     </div>
     """, unsafe_allow_html=True)
     
-    st.write("") # Spacer
-    # Offline Guide (Safe for Viva)
+    st.write("")
     with st.expander("📖 Click to Read Monsoon Preparation Guide"):
         st.markdown("""
         ### 🌧️ Official Monsoon Advisory
@@ -197,22 +164,18 @@ elif menu == "Market Analytics (Real AI)":
     st.header("📈 Market Analytics & Prediction")
     
     if df is None:
-        st.error("🚨 Error: Could not find 'large_agri_dataset.csv'. Please run 'generate_data.py' first.")
+        st.error("🚨 Error: Could not find 'data/large_agri_dataset.csv'. Please check your file structure.")
         st.stop()
 
-    # User Selects Crop
     crop_list = df['Crop'].unique()
     selected_crop = st.selectbox("Select Crop to Analyze", crop_list)
     
-    # Filter data
     crop_df = df[df['Crop'] == selected_crop].copy()
     crop_df = crop_df.sort_values("Date")
     
-    # GRAPH
     st.subheader(f"📊 5-Year Price History: {selected_crop}")
     st.line_chart(crop_df.set_index("Date")["Price"])
     
-    # ML Logic
     crop_df['DayIndex'] = crop_df['Date'].map(datetime.datetime.toordinal)
     X = crop_df[['DayIndex']]
     y = crop_df['Price']
@@ -220,7 +183,6 @@ elif menu == "Market Analytics (Real AI)":
     model = LinearRegression()
     model.fit(X, y)
     
-    # Real-Time Prediction Section
     st.write("---")
     st.subheader("🤖 AI Price Prediction & Advisory")
     
@@ -235,7 +197,6 @@ elif menu == "Market Analytics (Real AI)":
         )
         days_ahead = st.slider("Forecast Horizon (Days):", 1, 30, 7)
 
-    # Predict
     future_date = datetime.date.today() + datetime.timedelta(days=days_ahead)
     future_day_index = np.array([[future_date.toordinal()]])
     predicted_price = model.predict(future_day_index)[0]
@@ -247,7 +208,6 @@ elif menu == "Market Analytics (Real AI)":
             delta=f"{predicted_price - current_price:.2f} vs Today"
         )
     
-    # Recommendation
     st.write("### 📢 System Recommendation")
     change_percent = ((predicted_price - current_price) / current_price) * 100
     
